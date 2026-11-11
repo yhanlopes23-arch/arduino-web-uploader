@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "node scripts/copy-compiler.mjs",
+    "postinstall": "npm run build",
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/copy-compiler.mjs && vite build",
     "test": "node --test tests/*.test.mjs",
