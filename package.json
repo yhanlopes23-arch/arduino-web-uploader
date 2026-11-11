@@ -7,11 +7,16 @@
     "postinstall": "node scripts/copy-compiler.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/copy-compiler.mjs && vite build",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "deploy": "npm run build && wrangler deploy",
+    "preview": "npm run build && wrangler dev"
   },
   "dependencies": {
     "@horang-corp/avr-gcc-wasm": "0.2.0",
     "webserial-flasher": "1.0.1"
   },
-  "devDependencies": {"vite": "^7.1.0"}
+  "devDependencies": {
+    "vite": "^7.1.0",
+    "wrangler": "^4.160.0"
+  }
 }
