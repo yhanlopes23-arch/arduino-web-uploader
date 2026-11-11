@@ -1,5 +1,6 @@
 import { compile } from '@horang-corp/avr-gcc-wasm';
-import { STK500, BOARDS } from 'webserial-flasher';
+import { STK500 } from 'webserial-flasher';
+import { probeUno } from './bootloader.js';
 import { UnoTransport } from './uno-transport.js';
 import { describePort } from './serial-utils.js';
 import { BLINK, prepareSketch, friendlyError } from './sketch.js';
@@ -10,10 +11,13 @@ const code = byId('code');
 const upload = byId('upload');
 const example = byId('example');
 const choosePortButton = byId('choose-port');
+const testConnectionButton = byId('test-connection');
 const STORAGE_KEY = 'arduino-web-uploader-draft';
 
 let selectedPort = null;
 let uploading = false;
+let verifiedPort = null;
+let verifiedBaud = null;
 
 try { code.value = localStorage.getItem(STORAGE_KEY) || BLINK; }
 catch { code.value = BLINK; }
@@ -43,7 +47,11 @@ async function refreshAuthorizedPorts() {
   if (!('serial' in navigator) || uploading) return;
   try {
     const ports = await navigator.serial.getPorts();
-    if (selectedPort && !ports.includes(selectedPort)) selectedPort = null;
+    if (selectedPort && !ports.includes(selectedPort)) {
+      selectedPort = null;
+      verifiedPort = null;
+      verifiedBaud = null;
+    }
     if (!selectedPort && ports.length === 1) selectedPort = ports[0];
 
     if (selectedPort) {
@@ -65,7 +73,9 @@ async function choosePort() {
     // O seletor Web Serial só pode ser aberto por um clique do usuário.
     const port = await navigator.serial.requestPort();
     selectedPort = port;
-    showDevice('Porta USB autorizada', describePort(port) + '. Clique em Enviar ao Arduino para gravar.');
+    verifiedPort = null;
+    verifiedBaud = null;
+    showDevice('Porta USB autorizada', describePort(port) + '. Use Testar conexão USB ou Enviar ao Arduino.');
   } catch (error) {
     showDevice('Seleção de porta não concluída', friendlyError(error));
   }
@@ -78,26 +88,66 @@ function status(title, message, pct = 0) {
   byId('progress').value = Math.max(0, Math.min(100, pct));
 }
 
+function setBusy(busy) {
+  uploading = busy;
+  upload.disabled = busy;
+  example.disabled = busy;
+  choosePortButton.disabled = busy;
+  testConnectionButton.disabled = busy;
+}
+
+async function authorizePort() {
+  requireSerial();
+  if (!selectedPort) {
+    // Necessariamente chamado diretamente por um clique no botão.
+    selectedPort = await navigator.serial.requestPort();
+  }
+  return selectedPort;
+}
+
+async function diagnosePort() {
+  const result = await probeUno(selectedPort, {
+    onAttempt: ({ baudRate, attempt, attemptsPerSpeed }) => {
+      status('Sincronizando bootloader', 'Testando ' + baudRate + ' baud (tentativa ' + attempt + '/' + attemptsPerSpeed + '). Se falhar, confira a porta USB e pressione RESET ao tentar novamente.', 20);
+    },
+  });
+  verifiedPort = selectedPort;
+  verifiedBaud = result.baudRate;
+  showDevice('ATmega328P detectado via bootloader', describePort(selectedPort) + ' — STK500v1, ' + result.baudRate + ' baud. Compatível com Uno R3; fabricante não confirmado.');
+  return result;
+}
+
+async function testConnection() {
+  if (uploading) return;
+  setBusy(true);
+  try {
+    await authorizePort();
+    await diagnosePort();
+    status('Conexão confirmada', 'A placa respondeu ao bootloader e a assinatura ATmega328P foi verificada. Nenhum firmware foi gravado.', 100);
+  } catch (error) {
+    console.error('Falha no teste do bootloader:', error);
+    status('Teste de conexão falhou', friendlyError(error), 0);
+  } finally {
+    setBusy(false);
+  }
+}
+
 async function send() {
   if (uploading) return;
   let transport;
-  uploading = true;
-  upload.disabled = true;
-  example.disabled = true;
-  choosePortButton.disabled = true;
+  setBusy(true);
   try {
     const source = prepareSketch(code.value);
     requireSerial();
 
-    // Sem porta selecionada, solicita acesso imediatamente após o clique.
-    // Nunca abrimos diálogo ou gravamos a placa automaticamente.
-    if (!selectedPort) {
-      status('Selecione o Arduino', 'Autorize a porta serial na janela do navegador.', 5);
-      selectedPort = await navigator.serial.requestPort();
-    }
-    showDevice('Porta USB selecionada', describePort(selectedPort) + '. Identidade do microcontrolador ainda não verificada.');
+    // Seleção de porta exige interação explícita do usuário.
+    await authorizePort();
+    showDevice('Porta USB selecionada', describePort(selectedPort) + '. Verificando a assinatura do microcontrolador.');
 
-    status('Compilando C++', 'Baixando e executando o compilador WebAssembly. Não desconecte o Arduino.', 12);
+    // Identifica a velocidade de comunicação ANTES de compilar ou gravar.
+    // Não apaga nem escreve memória durante esse teste.
+    const { board } = await diagnosePort();
+    status('Compilando C++', 'Bootloader identificado. Compilando o código sem desconectar o Arduino.', 32);
     const assetsBase = new URL(import.meta.env.BASE_URL + 'avr/', document.baseURI).href;
     const result = await compile({ source, sensors: [], assetsBase });
     if (!result || typeof result.hex !== 'string' || !result.hex.startsWith(':')) {
@@ -107,13 +157,11 @@ async function send() {
       throw new Error('Código excedeu a memória disponível no Arduino Uno R3.');
     }
 
-    const board = BOARDS['arduino-uno-r3'] || BOARDS['arduino-uno'];
-    if (!board) throw new Error('Configuração da placa Uno R3 indisponível.');
     transport = new UnoTransport(selectedPort);
     status('Conectando', 'Abrindo a USB e verificando o bootloader STK500v1.', 45);
     await transport.open(board.baudRate);
 
-    const flasher = new STK500(transport, board);
+    const flasher = new STK500(transport, board, { retry: { syncAttempts: 2, retryDelayMs: 100 } });
     await flasher.bootload(result.hex, (stage, percentage) => {
       const progress = Number.isFinite(percentage) ? percentage : 0;
       status('Gravando no Arduino', String(stage) + ' — não desconecte o cabo.', 50 + Math.min(100, Math.max(0, progress)) * 0.5);
@@ -127,20 +175,19 @@ async function send() {
     if (transport) {
       try { await transport.close(); } catch (error) { console.warn('Falha ao liberar a porta USB', error); }
     }
-    uploading = false;
-    upload.disabled = false;
-    example.disabled = false;
-    choosePortButton.disabled = false;
+    setBusy(false);
   }
 }
 
 upload.addEventListener('click', send);
 choosePortButton.addEventListener('click', choosePort);
+testConnectionButton.addEventListener('click', testConnection);
 
 if (!window.isSecureContext || !('serial' in navigator)) {
   showDevice('Navegador incompatível', 'Use Chrome ou Edge em HTTPS, no computador.');
   status('Navegador incompatível', 'Este navegador não permite acesso à porta serial USB.', 0);
   choosePortButton.disabled = true;
+  testConnectionButton.disabled = true;
   upload.disabled = true;
 } else {
   refreshAuthorizedPorts();
