@@ -1,0 +1,4 @@
+node_modules/
+dist/
+public/avr/
+.DS_Store
