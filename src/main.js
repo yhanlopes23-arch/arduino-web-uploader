@@ -38,9 +38,8 @@ async function send() {
     }
 
     // O seletor de porta precisa ser aberto imediatamente após o clique do usuário.
-    transport = new WebSerialTransport();
     status('Escolha a porta USB', 'Selecione a porta COM do Arduino Uno R3 e permita a conexão.', 5);
-    await transport.requestPort();
+    transport = await WebSerialTransport.requestPort();
 
     status('Compilando C++', 'A primeira compilação baixa arquivos do compilador WebAssembly. Aguarde sem desconectar a placa.', 12);
     const assetsBase = new URL(import.meta.env.BASE_URL + 'avr/', document.baseURI).href;
