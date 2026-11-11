@@ -14,6 +14,15 @@
     <div><p class="eyebrow">ARDUINO UNO R3</p><h1>Arduino Web Uploader</h1>
       <p class="subtitle">Cole seu código e envie para o Arduino pela USB.</p></div>
   </header>
+  <section class="device" aria-label="Conexão Arduino">
+    <div class="device-row">
+      <div class="device-description">
+        <strong id="device-state">Procurando portas autorizadas...</strong>
+        <p id="device-details">A identificação do modelo é confirmada somente na comunicação com a placa.</p>
+      </div>
+      <button id="choose-port" type="button" class="secondary">Selecionar Arduino</button>
+    </div>
+  </section>
   <label for="code">Código Arduino (C++)</label>
   <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="hint"></textarea>
   <p id="hint">Use código Arduino contendo <code>void setup()</code> e <code>void loop()</code>.</p>
