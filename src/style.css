@@ -1,0 +1,14 @@
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#eaf5fa;background:#09141b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 70% 0%,#183e48,transparent 44%),#09141b}
+.app{max-width:850px;margin:0 auto;padding:42px 18px}header{display:flex;gap:16px;align-items:center;margin-bottom:30px}
+.logo{display:grid;place-items:center;font-size:46px;width:70px;height:70px;border:1px solid #3eaa92;border-radius:16px;color:#75e2bd;background:#12362f}
+h1{margin:2px 0 5px;font-size:clamp(24px,4vw,36px)}.eyebrow{font-size:11px;letter-spacing:2px;font-weight:800;color:#75e2bd;margin:0}
+.subtitle{color:#a9bdcb;margin:0;font-size:14px}label{display:block;font-weight:700;margin-bottom:9px}textarea{display:block;width:100%;height:370px;min-height:220px;resize:vertical;border:1px solid #426071;border-radius:13px;background:#0e2028;color:#d5f7e9;padding:18px;font:14px/1.6 Consolas,'Courier New',monospace;tab-size:2}
+textarea:focus-visible,button:focus-visible{outline:3px solid #60d4ae;outline-offset:3px}#hint{font-size:12px;color:#b8c8d4}
+.controls{display:flex;gap:12px;margin-top:19px}button{cursor:pointer;border:0;border-radius:10px;padding:14px 21px;font-weight:750;font-size:14px}button:disabled{opacity:.5;cursor:wait}
+#upload{flex:1;color:#04251c;background:#72e5b3}.secondary{background:#263b47;color:#eef7ff;border:1px solid #47616d}
+.status{margin-top:20px;padding:17px;background:#152932;border:1px solid #3e5664;border-radius:13px}
+.line{display:flex;justify-content:space-between;gap:10px;font-size:14px}#percent{color:#a9b9c5}progress{display:block;width:100%;height:10px;accent-color:#5fd5a5;margin:13px 0}#details{color:#b7c7d0;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+details{margin-top:19px;color:#b7c7d0;font-size:13px;line-height:1.6}summary{cursor:pointer}
+footer{text-align:center;margin-top:36px;color:#8ea7b5;font-size:11px}
+@media(max-width:580px){.app{padding:23px 12px}.controls{flex-direction:column}header{gap:11px}.logo{width:55px;height:55px;font-size:35px}}
