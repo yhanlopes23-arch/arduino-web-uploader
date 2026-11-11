@@ -1,21 +1,24 @@
 name: Publicar Arduino Web Uploader
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
+
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
+
 jobs:
-  publicar:
+  build:
+    name: Compilar e preparar arquivos
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,9 +30,42 @@ jobs:
         run: npm test
       - name: Compilar o site
         run: npm run build
+      - name: Verificar saída compilada
+        run: test -f dist/index.html
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Enviar artefato para o GitHub Pages
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
-      - id: deployment
+          retention-days: 3
+
+  deploy:
+    name: Publicar no GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Aguardar artefato ficar disponível na API do GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          for attempt in $(seq 1 24); do
+            count=$(gh api "repos/$GH_REPO/actions/runs/$RUN_ID/artifacts" \
+              --jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length') || count=0
+            if [ "$count" -eq 1 ]; then
+              echo "Artefato github-pages confirmado pela API."
+              exit 0
+            fi
+            echo "Tentativa $attempt/24: artefato ainda não disponível (encontrados: $count)."
+            sleep 5
+          done
+          echo "::error::O artefato github-pages não apareceu na API. Verifique os serviços GitHub Actions/Pages."
+          exit 1
+      - name: Publicar o site
+        id: deployment
         uses: actions/deploy-pages@v4
