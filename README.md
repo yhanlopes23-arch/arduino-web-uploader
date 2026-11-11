@@ -23,6 +23,23 @@ O navegador não acessa a USB automaticamente: precisa da sua autorização. O W
 - Exemplo inicial: LED pisca no pino 13.
 - Rascunho salvo apenas no navegador (localStorage), sem envio do código para uma conta GitHub.
 
+## Publicação via Cloudflare Workers
+
+Também é possível hospedar o mesmo site pela Cloudflare, sem usar o plugin Vite da Cloudflare. O arquivo `wrangler.jsonc` informa ao Wrangler que os arquivos finais estão em `./dist`.
+
+No painel **Cloudflare → Workers & Pages → arduino-web-uploader → Settings → Build**, configure:
+
+- **Build command:** deixe em branco (o script de deploy executa o build).
+- **Deploy command:** `npm run deploy`.
+- **Root directory:** `/` (raiz do repositório).
+- **Git branch:** `main`.
+
+Isso substitui o comando anterior `npx wrangler deploy`, que tentava configurar o Vite automaticamente e falhava. O novo script compila e depois publica os ativos estáticos. Após salvar, execute novamente o deploy para validar.
+
+Se preferir comandos separados, use Build command `npm run build` e Deploy command `npx wrangler deploy`. Não execute o build duas vezes sem necessidade.
+
+A opção de GitHub Pages também continua disponível, mas deve ser ativada nas configurações do GitHub antes do primeiro deploy.
+
 ## Estado e limitações
 
 **Protótipo ainda não validado em hardware físico.** Os testes existentes verificam preparação do sketch, não garantem compilação nem gravação. A publicação só estará confirmada quando a ação do GitHub Pages concluir com sucesso.
