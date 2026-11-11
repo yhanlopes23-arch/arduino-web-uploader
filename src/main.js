@@ -16,8 +16,6 @@ const STORAGE_KEY = 'arduino-web-uploader-draft';
 
 let selectedPort = null;
 let uploading = false;
-let verifiedPort = null;
-let verifiedBaud = null;
 
 try { code.value = localStorage.getItem(STORAGE_KEY) || BLINK; }
 catch { code.value = BLINK; }
@@ -49,8 +47,6 @@ async function refreshAuthorizedPorts() {
     const ports = await navigator.serial.getPorts();
     if (selectedPort && !ports.includes(selectedPort)) {
       selectedPort = null;
-      verifiedPort = null;
-      verifiedBaud = null;
     }
     if (!selectedPort && ports.length === 1) selectedPort = ports[0];
 
@@ -73,8 +69,6 @@ async function choosePort() {
     // O seletor Web Serial só pode ser aberto por um clique do usuário.
     const port = await navigator.serial.requestPort();
     selectedPort = port;
-    verifiedPort = null;
-    verifiedBaud = null;
     showDevice('Porta USB autorizada', describePort(port) + '. Use Testar conexão USB ou Enviar ao Arduino.');
   } catch (error) {
     showDevice('Seleção de porta não concluída', friendlyError(error));
@@ -111,8 +105,6 @@ async function diagnosePort() {
       status('Sincronizando bootloader', 'Testando ' + baudRate + ' baud (tentativa ' + attempt + '/' + attemptsPerSpeed + '). Se falhar, confira a porta USB e pressione RESET ao tentar novamente.', 20);
     },
   });
-  verifiedPort = selectedPort;
-  verifiedBaud = result.baudRate;
   showDevice('ATmega328P detectado via bootloader', describePort(selectedPort) + ' — STK500v1, ' + result.baudRate + ' baud. Compatível com Uno R3; fabricante não confirmado.');
   return result;
 }
