@@ -1,0 +1,17 @@
+{
+  "name": "arduino-web-uploader",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "node scripts/copy-compiler.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "build": "node scripts/copy-compiler.mjs && vite build",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@horang-corp/avr-gcc-wasm": "0.2.0",
+    "webserial-flasher": "1.0.1"
+  },
+  "devDependencies": {"vite": "^7.1.0"}
+}
