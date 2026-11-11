@@ -29,14 +29,14 @@ Também é possível hospedar o mesmo site pela Cloudflare, sem usar o plugin Vi
 
 No painel **Cloudflare → Workers & Pages → arduino-web-uploader → Settings → Build**, configure:
 
-- **Build command:** deixe em branco (o script de deploy executa o build).
-- **Deploy command:** `npm run deploy`.
+- **Build command:** `npm run build` (forma recomendada pela Cloudflare).
+- **Deploy command:** `npx wrangler deploy`.
 - **Root directory:** `/` (raiz do repositório).
 - **Git branch:** `main`.
 
-Isso substitui o comando anterior `npx wrangler deploy`, que tentava configurar o Vite automaticamente e falhava. O novo script compila e depois publica os ativos estáticos. Após salvar, execute novamente o deploy para validar.
+O `wrangler.jsonc` elimina a configuração automática indevida do Vite. O `package.json` também executa `npm run build` durante `postinstall` como proteção adicional: portanto, mesmo se o painel ainda estiver com o comando de build vazio, a instalação das dependências gerará a pasta `dist` antes do deploy. Essa solução é redundante quando um build command é definido no painel, mas mantém compatibilidade com a configuração atual. Execute novamente o deploy e valide o log.
 
-Se preferir comandos separados, use Build command `npm run build` e Deploy command `npx wrangler deploy`. Não execute o build duas vezes sem necessidade.
+Para evitar a duplicidade de compilação no futuro, pode-se remover o fallback `postinstall` após confirmar a publicação e manter apenas o build command oficial. O código não está validado na placa física.
 
 A opção de GitHub Pages também continua disponível, mas deve ser ativada nas configurações do GitHub antes do primeiro deploy.
 
