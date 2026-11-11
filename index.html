@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b24">
+  <meta name="description" content="Cole um programa C++ e envie ao Arduino Uno R3 pela USB.">
+  <title>Arduino Web Uploader</title>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div class="logo" aria-hidden="true">∞</div>
+    <div><p class="eyebrow">ARDUINO UNO R3</p><h1>Arduino Web Uploader</h1>
+      <p class="subtitle">Cole seu código e envie para o Arduino pela USB.</p></div>
+  </header>
+  <label for="code">Código Arduino (C++)</label>
+  <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="hint"></textarea>
+  <p id="hint">Use código Arduino contendo <code>void setup()</code> e <code>void loop()</code>.</p>
+  <div class="controls">
+    <button id="upload" type="button">Enviar ao Arduino ↗</button>
+    <button id="example" type="button" class="secondary">Exemplo: piscar LED</button>
+  </div>
+  <section class="status" role="status" aria-live="polite">
+    <div class="line"><strong id="state">Pronto para conectar</strong><span id="percent"></span></div>
+    <progress id="progress" value="0" max="100"></progress>
+    <p id="details">Conecte seu Uno R3 e use Chrome ou Edge. Na primeira tentativa, selecione a porta COM.</p>
+  </section>
+  <details><summary>Não encontrou o Arduino na lista?</summary>
+    <p>O Windows precisa reconhecer a porta COM. Verifique cabo USB de dados, Gerenciador de Dispositivos, driver CH340 (em alguns clones) e se outro aplicativo usa a porta.</p>
+  </details>
+  <footer>Compilação local no navegador • Gravação USB com sua permissão • Sem instalar Arduino IDE</footer>
+</main>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
